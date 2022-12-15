@@ -1,0 +1,18 @@
+﻿/// Convençoes do EF Core => Migrations
+/// "Pomelo.EntityFrameworkCore.MySql" Version="6.0.2"
+/// Microsoft.EntityFrameworkCore.Design" Version="6.0.3"
+/// Microsoft.EntityFrameworkCore.Tools =>  dotnet tool install --global dotnet-ef
+
+Comandos para aplicar o Migrations (Core.Tools)
+{
+	//Usar o migrations dentro da pasta onde esta o .csproj
+
+	//Cria script de migração
+	-dotnet ef migrations add 'nome'
+
+	//Remove o script de migração criado
+	-dotnet ef migrations remove 'nome'
+
+	//Gera o banco de dados e as tabelas com base no script adicionados (-dotnet ef migrations add 'nome')
+	-dotnet ef database update
+}
