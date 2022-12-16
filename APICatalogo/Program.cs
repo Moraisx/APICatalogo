@@ -1,5 +1,6 @@
 using APICatalogo.Context;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 /// <summary>
 /// Convençoes do EF Core => Migrations
 /// "Pomelo.EntityFrameworkCore.MySql" Version="6.0.2"
@@ -11,7 +12,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Equivalente ao ConfigureServices()
 
-builder.Services.AddControllers();
+//AddJsonOptions(options =>... Ignora o objeto quando um ciclo de referência é detectado durante a serialização.
+//Quando duas entidades estão se referenciando uma com a outra
+//Ex:return _context.Categorias.Include(produto => produto.Produtos).ToList();
+builder.Services.AddControllers().AddJsonOptions(options => 
+options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
