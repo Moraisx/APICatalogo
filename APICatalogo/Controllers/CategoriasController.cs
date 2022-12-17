@@ -2,6 +2,7 @@
 using APICatalogo.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace APICatalogo.Controllers
 {
@@ -17,14 +18,14 @@ namespace APICatalogo.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Categoria>> GetAll()
+        public async Task<ActionResult<IEnumerable<Categoria>>> GetAll()
         {
             //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
             //Evitar retornar todos os dados, sempre pense em aplicar um filtro = Ex: Take(100)
             try
             {
                 //throw new NotImplementedException();
-                return _context.Categorias.Take(100).AsNoTracking().ToList();
+                return await _context.Categorias.Take(100).AsNoTracking().ToListAsync();
             }
             catch (Exception)
             {
@@ -34,13 +35,13 @@ namespace APICatalogo.Controllers
      
         }
 
-        [HttpGet("{id:int}", Name ="obterCategoria")]
-        public ActionResult GetCategoria(int id)
+        [HttpGet("{id:int:min(1)}", Name ="obterCategoria")]
+        public async Task<ActionResult<Categoria>> GetCategoria(int id)
         {
             //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
             try
             {
-                var categoria = _context.Categorias.AsNoTracking().FirstOrDefault(categoria => categoria.CategoriaId == id);
+                var categoria = await _context.Categorias.AsNoTracking().FirstOrDefaultAsync(categoria => categoria.CategoriaId == id);
 
                 if (categoria is null)
                 {
@@ -48,6 +49,8 @@ namespace APICatalogo.Controllers
                 }
 
                 return Ok(categoria);
+                //return categoria; Pode retornar apenas categoria pois o metodo ActionResult<Categoria> dispoem retorno dos metodos 
+                //ActionResult e categoria.
             }
             catch (Exception)
             {
@@ -59,12 +62,12 @@ namespace APICatalogo.Controllers
         }
 
         [HttpGet("CategoriaProdutos/{nome}")]
-        public ActionResult<IEnumerable<Categoria>> GetAllCategoriasProdutosNome(string nome)
+        public async Task<ActionResult<IEnumerable<Categoria>>> GetAllCategoriasProdutosNome(string nome)
         {
             //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
             try
             {
-                var categoriaNome = _context.Categorias.Include(produto => produto.Produtos).AsNoTracking().ToList();
+                var categoriaNome = await _context.Categorias.Include(produto => produto.Produtos).AsNoTracking().ToListAsync();
                 var categoriaProdutos = categoriaNome.FirstOrDefault(categoria_nome => categoria_nome.Nome == nome);
 
                 if (categoriaProdutos is null)
@@ -72,7 +75,7 @@ namespace APICatalogo.Controllers
                     return NotFound($"Categoria com o nome = {nome} não encontrada");
                 }
 
-                return Ok(categoriaProdutos);
+                return Ok(categoriaProdutos); 
             }
             catch (Exception)
             {
@@ -84,14 +87,14 @@ namespace APICatalogo.Controllers
         }
 
         [HttpGet("produtos")]
-        public ActionResult<IEnumerable<Categoria>> GetAllCategoriasProdutos()
+        public async Task<ActionResult<IEnumerable<Categoria>>> GetAllCategoriasProdutos()
         {
             //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
             //Evitar retornar todos os dados eem obj relacionados, sempre pense em aplicar um filtro = Ex: Where(produto => produto.CategoriaId <= 100)
             try
             { 
-                return _context.Categorias.Include(produto => produto.Produtos)
-                       .Where(produto => produto.CategoriaId <= 100).AsNoTracking().ToList();
+                return await _context.Categorias.Include(produto => produto.Produtos)
+                       .Where(produto => produto.CategoriaId <= 100).AsNoTracking().ToListAsync();
             }
             catch (Exception)
             {
@@ -103,7 +106,7 @@ namespace APICatalogo.Controllers
         }
 
         [HttpPost]
-        public ActionResult PostCategoria(Categoria categoria)
+        public async Task<ActionResult> PostCategoria(Categoria categoria)
         {
             try
             {
@@ -113,7 +116,7 @@ namespace APICatalogo.Controllers
                 }
 
                 _context.Categorias.Add(categoria);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
 
                 return new CreatedAtRouteResult("obterCategoria", new { id = categoria.CategoriaId }, categoria);
             }
@@ -126,8 +129,8 @@ namespace APICatalogo.Controllers
            
         }
 
-        [HttpPut("{id:int}")]
-        public ActionResult PutCategoria(int id, Categoria categoria)
+        [HttpPut("{id:int:min(1)}")]
+        public async Task<ActionResult> PutCategoria(int id, Categoria categoria)
         {
             try
             {
@@ -138,7 +141,7 @@ namespace APICatalogo.Controllers
                 }
 
                 _context.Entry(categoria).State = EntityState.Modified;
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
 
                 return Ok(categoria);//retorna response status is 200
             }
@@ -151,12 +154,12 @@ namespace APICatalogo.Controllers
            
         }
 
-        [HttpDelete("{id:int}")]
-        public ActionResult<Categoria> DeleteCategoria(int id)
+        [HttpDelete("{id:int:min(1)}")]
+        public async Task<ActionResult<Categoria>> DeleteCategoria(int id)
         {
             try
             {
-                var categoria = _context.Categorias.FirstOrDefault(categoria => categoria.CategoriaId == id);
+                var categoria = await _context.Categorias.FirstOrDefaultAsync(categoria => categoria.CategoriaId == id);
 
                 if (categoria is null)
                 {
@@ -164,7 +167,7 @@ namespace APICatalogo.Controllers
                 }
 
                 _context.Categorias.Remove(categoria);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
 
                 return Ok(categoria);
             }

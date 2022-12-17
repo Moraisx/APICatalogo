@@ -20,11 +20,11 @@ namespace APICatalogo.Controllers
         [HttpGet]
         //IEnumerable fica mais otimizado
         //ActionResult para retornar mais de um tipo (Pode retornar todos os tipos suportados por ele)
-        public ActionResult<IEnumerable<Produto>> GetAll()
+        public async Task<ActionResult<IEnumerable<Produto>>> GetAll()
         {
             //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
             //Evitar retornar todos os dados, sempre pense em aplicar um filtro = Ex: Take(100)
-            var produtos = _context.Produtos.Take(100).AsNoTracking().ToList();
+            var produtos = await _context.Produtos.Take(100).AsNoTracking().ToListAsync();
             if(produtos is null)
             {
                 return NotFound("Produtos não encontrados");//Retorno response status is 404 - Herda de ActionResult
@@ -32,12 +32,12 @@ namespace APICatalogo.Controllers
             return produtos;
         }
 
-        [HttpGet("{id:int}", Name="ObterProduto")]
-        public ActionResult<Produto> GetProduto(int id)
+        [HttpGet("{id:int:min(1)}", Name="ObterProduto")]
+        public async Task<ActionResult<Produto>> GetProduto(int id)
         {
             //FirstOrDefault caso não encontre o produto retorna null
             //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
-            var produto = _context.Produtos.AsNoTracking().FirstOrDefault<Produto>(
+            var produto = await _context.Produtos.AsNoTracking().FirstOrDefaultAsync<Produto>(
                 produto => produto.ProdutoId == id);
 
             if(produto is null) 
@@ -48,7 +48,7 @@ namespace APICatalogo.Controllers
         }
 
         [HttpPost]
-        public ActionResult PostProduto([FromBody] Produto produto)
+        public async Task<ActionResult> PostProduto([FromBody] Produto produto)
         {
             //[FromBody] e BadRequest são usados de forma implicida pela [ApiController]
             if (!ModelState.IsValid)
@@ -62,7 +62,7 @@ namespace APICatalogo.Controllers
             }
    
             _context.Produtos.Add(produto); // alocamento em memoria
-            _context.SaveChanges(); // metodo para persistir no bando de dados
+            await _context.SaveChangesAsync(); // metodo para persistir no bando de dados
 
             return new CreatedAtRouteResult("obterproduto", new { id = produto.ProdutoId }, produto);//retorna response status is 201
 
@@ -71,8 +71,8 @@ namespace APICatalogo.Controllers
 
         }
 
-        [HttpPut("{id:int}")]
-        public ActionResult PutProduto(int id, Produto produto)
+        [HttpPut("{id:int:min(1)}")]
+        public async Task<ActionResult> PutProduto(int id, Produto produto)
         {
             if(id != produto.ProdutoId)
             {
@@ -80,15 +80,15 @@ namespace APICatalogo.Controllers
             }
 
             _context.Entry(produto).State = EntityState.Modified;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return Ok(produto);//retorna response status is 200
         }
 
-        [HttpDelete("{id:int}")]
-        public  ActionResult DeleteProduto(int id)
+        [HttpDelete("{id:int:min(1)}")]
+        public async Task<ActionResult> DeleteProduto(int id)
         {
-            var produto = _context.Produtos.FirstOrDefault<Produto>(produto => produto.ProdutoId == id);
+            var produto = await _context.Produtos.FirstOrDefaultAsync<Produto>(produto => produto.ProdutoId == id);
             //var produto = _context.Produtos.Find(id);
 
             if (produto is null)
@@ -97,7 +97,7 @@ namespace APICatalogo.Controllers
             }
            
             _context.Produtos.Remove(produto); 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return Ok(produto);
         }
