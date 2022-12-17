@@ -1,6 +1,5 @@
 ﻿using APICatalogo.Context;
 using APICatalogo.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,88 +16,165 @@ namespace APICatalogo.Controllers
             _context = context;
         }
 
-        [HttpGet("CategoriaProdutos/{nome}")]
-        public ActionResult<IEnumerable<Categoria>> GetAllCategoriasProdutosNome(string nome)
-        {
-
-            var categoriaNome = _context.Categorias.Include(produto => produto.Produtos).ToList();
-            var categoriaProdutos = categoriaNome.FirstOrDefault(categoria_nome => categoria_nome.Nome == nome);
-
-            if (categoriaProdutos is null)
-            {
-                return NotFound("Categoria não encontrada");
-            }
-
-            return Ok(categoriaProdutos);
-        }
-
-        [HttpGet("produtos")]
-        public ActionResult<IEnumerable<Categoria>> GetAllCategoriasProdutos()
-        {
-            return _context.Categorias.Include(produto => produto.Produtos).ToList();
-        }
-
         [HttpGet]
         public ActionResult<IEnumerable<Categoria>> GetAll()
         {
-            return _context.Categorias.ToList();
+            //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
+            //Evitar retornar todos os dados, sempre pense em aplicar um filtro = Ex: Take(100)
+            try
+            {
+                //throw new NotImplementedException();
+                return _context.Categorias.Take(100).AsNoTracking().ToList();
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, 
+                                  "Erro ao tentar obter os dados");
+            }
+     
         }
 
         [HttpGet("{id:int}", Name ="obterCategoria")]
         public ActionResult GetCategoria(int id)
         {
-            var categoria = _context.Categorias.FirstOrDefault(categoria => categoria.CategoriaId == id);
-
-            if(categoria is null)
+            //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
+            try
             {
-                return NotFound("Categoria não encontrada");
-            }
+                var categoria = _context.Categorias.AsNoTracking().FirstOrDefault(categoria => categoria.CategoriaId == id);
 
-            return Ok(categoria);
+                if (categoria is null)
+                {
+                    return NotFound($"Categoria com o id = {id} não encontrada");
+                }
+
+                return Ok(categoria);
+            }
+            catch (Exception)
+            {
+
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                                  "Erro ao tentar obter os dados");
+            }
+           
+        }
+
+        [HttpGet("CategoriaProdutos/{nome}")]
+        public ActionResult<IEnumerable<Categoria>> GetAllCategoriasProdutosNome(string nome)
+        {
+            //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
+            try
+            {
+                var categoriaNome = _context.Categorias.Include(produto => produto.Produtos).AsNoTracking().ToList();
+                var categoriaProdutos = categoriaNome.FirstOrDefault(categoria_nome => categoria_nome.Nome == nome);
+
+                if (categoriaProdutos is null)
+                {
+                    return NotFound($"Categoria com o nome = {nome} não encontrada");
+                }
+
+                return Ok(categoriaProdutos);
+            }
+            catch (Exception)
+            {
+
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                                 "Erro ao tentar obter os dados");
+            }
+          
+        }
+
+        [HttpGet("produtos")]
+        public ActionResult<IEnumerable<Categoria>> GetAllCategoriasProdutos()
+        {
+            //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
+            //Evitar retornar todos os dados eem obj relacionados, sempre pense em aplicar um filtro = Ex: Where(produto => produto.CategoriaId <= 100)
+            try
+            { 
+                return _context.Categorias.Include(produto => produto.Produtos)
+                       .Where(produto => produto.CategoriaId <= 100).AsNoTracking().ToList();
+            }
+            catch (Exception)
+            {
+
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                                 "Erro ao tentar obter os dados");
+            }
+          
         }
 
         [HttpPost]
         public ActionResult PostCategoria(Categoria categoria)
         {
-            if(categoria is null) 
+            try
             {
-                return BadRequest("Categoria não pode ser nula");
+                if (categoria is null)
+                {
+                    return BadRequest("Dados invalidos");
+                }
+
+                _context.Categorias.Add(categoria);
+                _context.SaveChanges();
+
+                return new CreatedAtRouteResult("obterCategoria", new { id = categoria.CategoriaId }, categoria);
             }
+            catch (Exception)
+            {
 
-            _context.Categorias.Add(categoria);
-            _context.SaveChanges();
-
-            return new CreatedAtRouteResult("obterCategoria", new { id = categoria.CategoriaId }, categoria);
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                                 "Erro ao tentar obter os dados");
+            }
+           
         }
 
         [HttpPut("{id:int}")]
         public ActionResult PutCategoria(int id, Categoria categoria)
         {
-            if (id != categoria.CategoriaId)
+            try
             {
-                return BadRequest("categoria não encontrada");//retorna response status is 400
+                if (id != categoria.CategoriaId)
+                {
+                    //retorna response status is 400
+                    return BadRequest($"Não foi possivel atualizar a categoria pois o id = {id} não existe");
+                }
+
+                _context.Entry(categoria).State = EntityState.Modified;
+                _context.SaveChanges();
+
+                return Ok(categoria);//retorna response status is 200
             }
+            catch (Exception)
+            {
 
-            _context.Entry(categoria).State = EntityState.Modified;
-            _context.SaveChanges();
-
-            return Ok(categoria);//retorna response status is 200
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                                "Erro ao tentar obter os dados");
+            }
+           
         }
 
         [HttpDelete("{id:int}")]
         public ActionResult<Categoria> DeleteCategoria(int id)
         {
-            var categoria = _context.Categorias.FirstOrDefault(categoria => categoria.CategoriaId == id);
-
-            if(categoria is null)
+            try
             {
-                return NotFound("Categoria não encontrada para efetuar a exclusãp");
+                var categoria = _context.Categorias.FirstOrDefault(categoria => categoria.CategoriaId == id);
+
+                if (categoria is null)
+                {
+                    return NotFound("Categoria não encontrada para efetuar a exclusãp");
+                }
+
+                _context.Categorias.Remove(categoria);
+                _context.SaveChanges();
+
+                return Ok(categoria);
             }
+            catch (Exception)
+            {
 
-            _context.Categorias.Remove(categoria);
-            _context.SaveChanges();
-
-            return Ok(categoria);
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                                 "Erro ao tentar obter os dados");
+            }
+           
         }
     }
 }

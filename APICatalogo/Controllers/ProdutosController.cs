@@ -22,7 +22,9 @@ namespace APICatalogo.Controllers
         //ActionResult para retornar mais de um tipo (Pode retornar todos os tipos suportados por ele)
         public ActionResult<IEnumerable<Produto>> GetAll()
         {
-            var produtos = _context.Produtos.ToList();
+            //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
+            //Evitar retornar todos os dados, sempre pense em aplicar um filtro = Ex: Take(100)
+            var produtos = _context.Produtos.Take(100).AsNoTracking().ToList();
             if(produtos is null)
             {
                 return NotFound("Produtos não encontrados");//Retorno response status is 404 - Herda de ActionResult
@@ -34,7 +36,8 @@ namespace APICatalogo.Controllers
         public ActionResult<Produto> GetProduto(int id)
         {
             //FirstOrDefault caso não encontre o produto retorna null
-            var produto = _context.Produtos.FirstOrDefault<Produto>(
+            //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
+            var produto = _context.Produtos.AsNoTracking().FirstOrDefault<Produto>(
                 produto => produto.ProdutoId == id);
 
             if(produto is null) 
@@ -64,7 +67,7 @@ namespace APICatalogo.Controllers
             return new CreatedAtRouteResult("obterproduto", new { id = produto.ProdutoId }, produto);//retorna response status is 201
 
             //return CreatedAtAction(nameof(GetProduto), new { id = produto.ProdutoId }, produto);
-            //return Ok(produto); Tambem é possivel usar.
+            //return Ok(produto); Tambem é possivel usar. Retorna response status is 200
 
         }
 
