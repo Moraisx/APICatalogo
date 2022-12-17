@@ -16,3 +16,16 @@ Comandos para aplicar o Migrations (Core.Tools)
 	//Gera o banco de dados e as tabelas com base no script adicionados (-dotnet ef migrations add 'nome')
 	-dotnet ef database update
 }
+
+Metodos Action - Retornos possiveis
+
+Get:id - 200 OK(), 404 NotFound()
+
+Get:all - 200 OK(), 404 NotFound()
+
+Post - 201 created => EX: return new CreatedAtRouteResult("obterproduto", new { id = produto.ProdutoId }, produto), 
+					  404 NotFound, 204 NoContent(), 400 BadRequest()
+
+Put:id - 200 OK(), 404 NotFound(), 400 BadRequest()
+
+Delete:id - 200 OK(), 404 NotFound(), 204 NoContent()

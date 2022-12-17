@@ -42,7 +42,7 @@ namespace APICatalogo.Controllers
 
             if(produto is null) 
             {
-                return NotFound("Produto não encontrado");
+                return NotFound($"Produto com o id = {id} não encontrada");
             }
             return produto;
         }
@@ -58,7 +58,7 @@ namespace APICatalogo.Controllers
 
             if(produto is null)
             {
-                return BadRequest();
+                return BadRequest("Dados invalidos");
             }
    
             _context.Produtos.Add(produto); // alocamento em memoria
@@ -76,7 +76,7 @@ namespace APICatalogo.Controllers
         {
             if(id != produto.ProdutoId)
             {
-                return BadRequest("Produto não encontrado");//retorna response status is 400
+                return BadRequest($"Não foi possivel atualizar a categoria pois o id = {id} não existe");//retorna response status is 400
             }
 
             _context.Entry(produto).State = EntityState.Modified;
@@ -93,7 +93,7 @@ namespace APICatalogo.Controllers
 
             if (produto is null)
             {
-                return NotFound("Produto não encontrado para efetuar a exclusão");
+                return NotFound($"Não foi possivel excluir a produto pois o id = {id} não existe");
             }
            
             _context.Produtos.Remove(produto); 
