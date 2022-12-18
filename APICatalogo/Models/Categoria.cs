@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using APICatalogo.Validation;
+using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -16,12 +17,15 @@ namespace APICatalogo.Models
         [Key]
         public int CategoriaId { get; set; }//chave primaria
         
-        [Required]
+        [Required(ErrorMessage = "Nome obrigatório")]
         [MaxLength(80)]
+        [StringLength(80, MinimumLength = 2, ErrorMessage = "O nome deve ter entre {2} e {1} caracteres")]
+        [PrimeiraLetraMaiuscula] //Atributo customizado
         public string? Nome { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "ImagemUrl obrigatória")]
         [MaxLength(300)]
+        [StringLength(300, MinimumLength = 10, ErrorMessage = "A ImagemUrl deve ter entre {2} e {1} caracteres")]
         public string? ImagemUrl { get; set;  }
 
         //Propriedade de navegação 1 x N - Propriedades de navegação não são mapeadas(Não cria coluna) no BD

@@ -17,6 +17,8 @@ Comandos para aplicar o Migrations (Core.Tools)
 	-dotnet ef database update
 }
 
+=======================================================================================================================
+
 Metodos Action - Retornos possiveis
 
 Get:id - 200 OK(), 404 NotFound()
@@ -29,3 +31,22 @@ Post - 201 created => EX: return new CreatedAtRouteResult("obterproduto", new { 
 Put:id - 200 OK(), 404 NotFound(), 400 BadRequest()
 
 Delete:id - 200 OK(), 404 NotFound(), 204 NoContent()
+
+=======================================================================================================================
+
+DataAnotation mais usados
+
+[Required(ErrorMessage = "Nome obrigatório")]
+[RequiredExpression(".+\\@.+\\..+", (ErrorMessage = "Email invalido")]
+
+[StringLenght(10, MinimumLenght=4)] => Comprimento máximo e mínino permitido
+[MaxLength(100)] => Tamanho maximo do campo na tabela(criação)
+
+[Range(18,65, ErrorMessage = "Idade válida entre 18 a 65 anos")]
+
+[CreditCard]
+[Url]
+[Phone]
+
+[Campare("senha")]
+public string Senha {get; set;}

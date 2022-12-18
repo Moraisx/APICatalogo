@@ -1,5 +1,6 @@
 ﻿using APICatalogo.Context;
 using APICatalogo.Models;
+using APICatalogo.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +15,15 @@ namespace APICatalogo.Controllers
         public ProdutosController(AppDbContext context)
         {
             _context = context;
+        }
+
+        [HttpGet("saudacao/{nome}")]
+        public ActionResult<string> GetSaudacao(string nome)
+        {
+            //Sem a utilização [FromServices]
+            MeuServico meuservico = new MeuServico();
+            return meuservico.Saudacao(nome);
+           
         }
 
         //Metodo Action que retorna uma lista de produtos
@@ -33,8 +43,10 @@ namespace APICatalogo.Controllers
         }
 
         [HttpGet("{id:int:min(1)}", Name="ObterProduto")]
-        public async Task<ActionResult<Produto>> GetProduto(int id)
+        public async Task<ActionResult<Produto>> GetProduto(int id /*[FromQuery]int id]*/ /*[BindRequired]string nome*/)
         {
+            //[BindRequired] = Define um parametro obrigatorio; var produtoNome = nome https://localhost:7188/produto/1?nome=Suco
+            //[FromQuery] = Mapeia os parametros recebido na query = https://localhost:7188/produto/1?id=2
             //FirstOrDefault caso não encontre o produto retorna null
             //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
             var produto = await _context.Produtos.AsNoTracking().FirstOrDefaultAsync<Produto>(

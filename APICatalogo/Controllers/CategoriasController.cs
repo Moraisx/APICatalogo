@@ -1,8 +1,8 @@
 ﻿using APICatalogo.Context;
 using APICatalogo.Models;
+using APICatalogo.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
 
 namespace APICatalogo.Controllers
 {
@@ -15,6 +15,14 @@ namespace APICatalogo.Controllers
         public CategoriasController(AppDbContext context)
         {
             _context = context;
+        }
+
+        //Ex: de [FromServices]
+        [HttpGet("saudacao/{nome}")]
+        public ActionResult<string> GetSaudacao([FromServices]IMeuServico meuservico, string nome) 
+        {
+            //Usando [FromServices]
+            return meuservico.Saudacao(nome);
         }
 
         [HttpGet]
