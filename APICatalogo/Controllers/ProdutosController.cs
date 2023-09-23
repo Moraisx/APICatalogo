@@ -42,6 +42,18 @@ namespace APICatalogo.Controllers
             return produtos;
         }
 
+        [HttpGet("PrimeiroProduto")]
+
+        public async Task<ActionResult<Produto>> GetPrimeiroProduto()
+        {
+            var produtos = await _context.Produtos.FirstOrDefaultAsync<Produto>();
+            if (produtos is null)
+            {
+                return NotFound("Produto não encontrado");//Retorno response status is 404 - Herda de ActionResult
+            }
+            return produtos;
+        }
+
         [HttpGet("{id:int:min(1)}", Name="ObterProduto")]
         public async Task<ActionResult<Produto>> GetProduto(int id /*[FromQuery]int id]*/ /*[BindRequired]string nome*/)
         {

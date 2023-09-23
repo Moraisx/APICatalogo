@@ -25,6 +25,28 @@ namespace APICatalogo.Controllers
             return meuservico.Saudacao(nome);
         }
 
+        [HttpGet("categoriasQtd")]
+        public async Task<ActionResult<string>> GetCategoriasQtd()
+        {
+            List<Categoria> categorias = new List<Categoria>();
+            try
+            {
+                categorias = await _context.Categorias.ToListAsync();
+                if (categorias is null)
+                {
+                    return BadRequest("Nenhuma categoria cadastrada");
+                }
+                var quantidade = $"Toda de categorias cadastradas: {categorias.Count<Categoria>().ToString()}";
+
+                return quantidade;
+            }
+            catch(Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                                 "Erro ao tentar obter os dados");
+            }
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Categoria>>> GetAll()
         {
