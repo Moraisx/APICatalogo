@@ -16,7 +16,7 @@ namespace APICatalogo.Models
 
         [Key]
         public int CategoriaId { get; set; }//chave primaria
-        
+
         [Required(ErrorMessage = "Nome obrigatório")]
         [MaxLength(80)]
         [StringLength(80, MinimumLength = 2, ErrorMessage = "O nome deve ter entre {2} e {1} caracteres")]
@@ -25,7 +25,7 @@ namespace APICatalogo.Models
 
         [Required(ErrorMessage = "ImagemUrl obrigatória")]
         [MaxLength(300)]
-        [StringLength(300, MinimumLength = 10, ErrorMessage = "A ImagemUrl deve ter entre {2} e {1} caracteres")]
+        [StringLength(300, MinimumLength = 2, ErrorMessage = "A ImagemUrl deve ter entre {2} e {1} caracteres")]
         public string? ImagemUrl { get; set;  }
 
         //Propriedade de navegação 1 x N - Propriedades de navegação não são mapeadas(Não cria coluna) no BD

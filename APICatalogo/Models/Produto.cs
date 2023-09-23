@@ -29,7 +29,7 @@ namespace APICatalogo.Models
 
         [Required(ErrorMessage = "ImagemUrl obrigatória")]
         [MaxLength(300)]
-        [StringLength(300, MinimumLength = 10, ErrorMessage = "A ImagemUrl deve ter entre {2} e {1} caracteres")]
+        [StringLength(300, MinimumLength = 2, ErrorMessage = "A ImagemUrl deve ter entre {2} e {1} caracteres")]
         public string? ImagemUrl { get; set; }
 
         [Required(ErrorMessage = "Estoque obrigatório")]
