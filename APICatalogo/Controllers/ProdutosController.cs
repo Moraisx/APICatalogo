@@ -66,7 +66,8 @@ namespace APICatalogo.Controllers
 
             if(produto is null) 
             {
-                return NotFound($"Produto com o id = {id} não encontrada");
+                //return NotFound($"Produto com o id = {id} não encontrada");
+                return NotFound("Se Fodeu!!! - trazer img do front end de Fucker");
             }
             return produto;
         }

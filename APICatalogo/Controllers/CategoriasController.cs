@@ -2,6 +2,7 @@
 using APICatalogo.Models;
 using APICatalogo.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Server.IIS.Core;
 using Microsoft.EntityFrameworkCore;
 
 namespace APICatalogo.Controllers
@@ -23,6 +24,20 @@ namespace APICatalogo.Controllers
         {
             //Usando [FromServices]
             return meuservico.Saudacao(nome);
+        }
+
+        [HttpGet("SimularError")]
+        public ActionResult<string> GetConfigureExceptionHandler()
+        {
+            //throw new Exception("Exception de error no retorno.;  configuração de error global ConfigureExceptionHandler()");
+
+            string[] error = null;
+            if(error.Length > 0)
+            {
+                return "True";
+            }
+
+            return "Error";
         }
 
         [HttpGet("categoriasQtd")]
