@@ -4,6 +4,7 @@ using APICatalogo.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.IIS.Core;
 using Microsoft.EntityFrameworkCore;
+using System.Security.AccessControl;
 
 namespace APICatalogo.Controllers
 {
@@ -12,10 +13,12 @@ namespace APICatalogo.Controllers
     public class CategoriasController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly ILogger _logger;
 
-        public CategoriasController(AppDbContext context)
+        public CategoriasController(AppDbContext context, ILogger<CategoriasController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         //Ex: de [FromServices]
@@ -67,6 +70,7 @@ namespace APICatalogo.Controllers
         {
             //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
             //Evitar retornar todos os dados, sempre pense em aplicar um filtro = Ex: Take(100)
+
             try
             {
                 //throw new NotImplementedException();

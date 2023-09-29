@@ -1,5 +1,6 @@
 using APICatalogo.Context;
 using APICatalogo.Extensions;
+using APICatalogo.Logging;
 using APICatalogo.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
@@ -9,6 +10,7 @@ using System.Text.Json.Serialization;
 /// Microsoft.EntityFrameworkCore.Design" Version="6.0.3"
 /// Microsoft.EntityFrameworkCore.Tools =>  dotnet tool install --global dotnet-ef
 /// </summary>
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -31,7 +33,18 @@ options.UseMySql(mySqlConnection, ServerVersion.AutoDetect(mySqlConnection)));
 //Necessario para a utilização do [FromServices]
 builder.Services.AddTransient<IMeuServico, MeuServico>();
 
+//Exemplo de log salve em TxT
+var alimentarLog = false;
+if (alimentarLog)
+{
+    builder.Logging.AddProvider(new CustomLoggerProvider(new CustomLoggerProviderConfiguration
+    {
+        LogLevel = LogLevel.Information
+    }));
+}
+
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 //Equivalente ao Configure()
