@@ -1,6 +1,7 @@
 using APICatalogo.Context;
 using APICatalogo.Extensions;
 using APICatalogo.Logging;
+using APICatalogo.Repository;
 using APICatalogo.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
@@ -30,10 +31,13 @@ string mySqlConnection = builder.Configuration.GetConnectionString("DefaultConne
 builder.Services.AddDbContext<AppDbContext>(options =>
 options.UseMySql(mySqlConnection, ServerVersion.AutoDetect(mySqlConnection)));
 
+//registro UnitOfWork
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 //Necessario para a utilização do [FromServices]
 builder.Services.AddTransient<IMeuServico, MeuServico>();
 
-//Exemplo de log salve em TxT
+//Exemplo de log salvo em txt
 var alimentarLog = false;
 if (alimentarLog)
 {

@@ -1,8 +1,6 @@
-﻿using APICatalogo.Context;
-using APICatalogo.Models;
-using APICatalogo.Services;
+﻿using APICatalogo.Models;
+using APICatalogo.Repository;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace APICatalogo.Controllers
 {
@@ -10,64 +8,42 @@ namespace APICatalogo.Controllers
     [ApiController]
     public class ProdutosController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _contextUnitOfWork;
 
-        public ProdutosController(AppDbContext context)
+        public ProdutosController(IUnitOfWork context)
         {
-            _context = context;
-        }
-
-        [HttpGet("saudacao/{nome}")]
-        public ActionResult<string> GetSaudacao(string nome)
-        {
-            //Sem a utilização [FromServices]
-            MeuServico meuservico = new MeuServico();
-            return meuservico.Saudacao(nome);
-           
+            _contextUnitOfWork = context;
         }
 
         //Metodo Action que retorna uma lista de produtos
-        [HttpGet]
         //IEnumerable fica mais otimizado
         //ActionResult para retornar mais de um tipo (Pode retornar todos os tipos suportados por ele)
-        public async Task<ActionResult<IEnumerable<Produto>>> GetAll()
+        [HttpGet]
+        public ActionResult<IEnumerable<Produto>> GetAll()
         {
-            //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
             //Evitar retornar todos os dados, sempre pense em aplicar um filtro = Ex: Take(100)
-            var produtos = await _context.Produtos.Take(100).AsNoTracking().ToListAsync();
-            if(produtos is null)
-            {
-                return NotFound("Produtos não encontrados");//Retorno response status is 404 - Herda de ActionResult
-            }
-            return produtos;
+            return _contextUnitOfWork.ProdutoRepository.Get().Take(100).ToList();
+            
         }
 
-        [HttpGet("PrimeiroProduto")]
-
-        public async Task<ActionResult<Produto>> GetPrimeiroProduto()
+        [HttpGet("MaiorPreco")]
+        public ActionResult<IEnumerable<Produto>> GetProdutosPrecos()
         {
-            var produtos = await _context.Produtos.FirstOrDefaultAsync<Produto>();
-            if (produtos is null)
-            {
-                return NotFound("Produto não encontrado");//Retorno response status is 404 - Herda de ActionResult
-            }
-            return produtos;
+            return _contextUnitOfWork.ProdutoRepository.GetAllProdutosPreco().ToList();
         }
 
         [HttpGet("{id:int:min(1)}", Name="ObterProduto")]
-        public async Task<ActionResult<Produto>> GetProduto(int id /*[FromQuery]int id]*/ /*[BindRequired]string nome*/)
+        public ActionResult<Produto> GetProduto(int id /*[FromQuery]int id]*/ /*[BindRequired]string nome*/)
         {
             //[BindRequired] = Define um parametro obrigatorio; var produtoNome = nome https://localhost:7188/produto/1?nome=Suco
             //[FromQuery] = Mapeia os parametros recebido na query = https://localhost:7188/produto/1?id=2
             //FirstOrDefault caso não encontre o produto retorna null
             //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
-            var produto = await _context.Produtos.AsNoTracking().FirstOrDefaultAsync<Produto>(
-                produto => produto.ProdutoId == id);
+            var produto = _contextUnitOfWork.ProdutoRepository.GetByid(prod => prod.ProdutoId == id);
 
             if(produto is null) 
             {
-                //return NotFound($"Produto com o id = {id} não encontrada");
-                return NotFound("Se Fodeu!!! - trazer img do front end de Fucker");
+                return NotFound($"Produto com id: {id} não localizado");
             }
             return produto;
         }
@@ -76,18 +52,18 @@ namespace APICatalogo.Controllers
         public async Task<ActionResult> PostProduto([FromBody] Produto produto)
         {
             //[FromBody] e BadRequest são usados de forma implicida pela [ApiController]
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            //if (!ModelState.IsValid)
+            //{
+            //    return BadRequest(ModelState);
+            //}
 
             if(produto is null)
             {
                 return BadRequest("Dados invalidos");
             }
    
-            _context.Produtos.Add(produto); // alocamento em memoria
-            await _context.SaveChangesAsync(); // metodo para persistir no bando de dados
+            _contextUnitOfWork.ProdutoRepository.Add(produto); // alocamento em memoria
+            _contextUnitOfWork.Commit();
 
             return new CreatedAtRouteResult("obterproduto", new { id = produto.ProdutoId }, produto);//retorna response status is 201
 
@@ -97,23 +73,22 @@ namespace APICatalogo.Controllers
         }
 
         [HttpPut("{id:int:min(1)}")]
-        public async Task<ActionResult> PutProduto(int id, Produto produto)
+        public ActionResult<Produto> PutProduto(int id, Produto produto)
         {
             if(id != produto.ProdutoId)
             {
                 return BadRequest($"Não foi possivel atualizar a categoria pois o id = {id} não existe");//retorna response status is 400
             }
 
-            _context.Entry(produto).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
+            _contextUnitOfWork.ProdutoRepository.Update(produto);
+            _contextUnitOfWork.Commit();  
             return Ok(produto);//retorna response status is 200
         }
 
         [HttpDelete("{id:int:min(1)}")]
-        public async Task<ActionResult> DeleteProduto(int id)
+        public ActionResult<Produto> DeleteProduto(int id)
         {
-            var produto = await _context.Produtos.FirstOrDefaultAsync<Produto>(produto => produto.ProdutoId == id);
+            var produto = _contextUnitOfWork.ProdutoRepository.GetByid(prod => prod.ProdutoId == id);
             //var produto = _context.Produtos.Find(id);
 
             if (produto is null)
@@ -121,8 +96,8 @@ namespace APICatalogo.Controllers
                 return NotFound($"Não foi possivel excluir a produto pois o id = {id} não existe");
             }
            
-            _context.Produtos.Remove(produto); 
-            await _context.SaveChangesAsync();
+            _contextUnitOfWork.ProdutoRepository.Delete(produto);
+            _contextUnitOfWork.Commit();
 
             return Ok(produto);
         }
