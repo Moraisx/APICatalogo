@@ -75,7 +75,8 @@ namespace APICatalogo.Controllers
         [HttpPut("{id:int:min(1)}")]
         public ActionResult<Produto> PutProduto(int id, Produto produto)
         {
-            if(id != produto.ProdutoId)
+            var produtoId = _contextUnitOfWork.ProdutoRepository.GetByid(prod => prod.ProdutoId == id);
+            if (id != produto.ProdutoId || produtoId is null)
             {
                 return BadRequest($"Não foi possivel atualizar a categoria pois o id = {id} não existe");//retorna response status is 400
             }

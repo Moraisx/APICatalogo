@@ -1,5 +1,6 @@
 ﻿using APICatalogo.Context;
 using APICatalogo.Models;
+using APICatalogo.Repository;
 using APICatalogo.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.IIS.Core;
@@ -12,22 +13,22 @@ namespace APICatalogo.Controllers
     [ApiController]
     public class CategoriasController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _contextUnitOfWork;
         private readonly ILogger _logger;
 
-        public CategoriasController(AppDbContext context, ILogger<CategoriasController> logger)
+        public CategoriasController(IUnitOfWork context, ILogger<CategoriasController> logger)
         {
-            _context = context;
+            _contextUnitOfWork = context;
             _logger = logger;
         }
 
         //Ex: de [FromServices]
-        [HttpGet("saudacao/{nome}")]
-        public ActionResult<string> GetSaudacao([FromServices]IMeuServico meuservico, string nome) 
-        {
-            //Usando [FromServices]
-            return meuservico.Saudacao(nome);
-        }
+        //[HttpGet("saudacao/{nome}")]
+        //public ActionResult<string> GetSaudacao([FromServices]IMeuServico meuservico, string nome) 
+        //{
+        //    //Usando [FromServices]
+        //    return meuservico.Saudacao(nome);
+        //}
 
         [HttpGet("SimularError")]
         public ActionResult<string> GetConfigureExceptionHandler()
@@ -44,17 +45,17 @@ namespace APICatalogo.Controllers
         }
 
         [HttpGet("categoriasQtd")]
-        public async Task<ActionResult<string>> GetCategoriasQtd()
+        public ActionResult<string> GetCategoriasQtd()
         {
             List<Categoria> categorias = new List<Categoria>();
             try
             {
-                categorias = await _context.Categorias.ToListAsync();
+                categorias = _contextUnitOfWork.CategoriaRepository.Get().ToList();
                 if (categorias is null)
                 {
                     return BadRequest("Nenhuma categoria cadastrada");
                 }
-                var quantidade = $"Toda de categorias cadastradas: {categorias.Count<Categoria>().ToString()}";
+                var quantidade = $"Toda de categorias cadastradas: {categorias.Count()}";
 
                 return quantidade;
             }
@@ -66,15 +67,14 @@ namespace APICatalogo.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Categoria>>> GetAll()
+        public ActionResult<IEnumerable<Categoria>> GetAll()
         {
             //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
             //Evitar retornar todos os dados, sempre pense em aplicar um filtro = Ex: Take(100)
 
             try
             {
-                //throw new NotImplementedException();
-                return await _context.Categorias.Take(100).AsNoTracking().ToListAsync();
+                return _contextUnitOfWork.CategoriaRepository.Get().Take(100).ToList();
             }
             catch (Exception)
             {
@@ -85,12 +85,12 @@ namespace APICatalogo.Controllers
         }
 
         [HttpGet("{id:int:min(1)}", Name ="obterCategoria")]
-        public async Task<ActionResult<Categoria>> GetCategoria(int id)
+        public ActionResult<Categoria> GetCategoria(int id)
         {
             //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
             try
             {
-                var categoria = await _context.Categorias.AsNoTracking().FirstOrDefaultAsync(categoria => categoria.CategoriaId == id);
+                var categoria = _contextUnitOfWork.CategoriaRepository.GetByid(categ => categ.CategoriaId == id);
 
                 if (categoria is null)
                 {
@@ -111,12 +111,12 @@ namespace APICatalogo.Controllers
         }
 
         [HttpGet("CategoriaProdutos/{nome}")]
-        public async Task<ActionResult<IEnumerable<Categoria>>> GetAllCategoriasProdutosNome(string nome)
+        public ActionResult<IEnumerable<Categoria>> GetAllCategoriasProdutosNome(string nome)
         {
             //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
             try
             {
-                var categoriaNome = await _context.Categorias.Include(produto => produto.Produtos).AsNoTracking().ToListAsync();
+                var categoriaNome = _contextUnitOfWork.CategoriaRepository.GetAllCategoriasProdutos();
                 var categoriaProdutos = categoriaNome.FirstOrDefault(categoria_nome => categoria_nome.Nome == nome);
 
                 if (categoriaProdutos is null)
@@ -135,15 +135,15 @@ namespace APICatalogo.Controllers
           
         }
 
-        [HttpGet("produtos")]
-        public async Task<ActionResult<IEnumerable<Categoria>>> GetAllCategoriasProdutos()
+        [HttpGet("produtosTop100")]
+        public ActionResult<IEnumerable<Categoria>> GetAllCategoriasProdutos()
         {
             //AsNoTracking() melhora o desempenho, usado somente em consultas de leitura - Get()
             //Evitar retornar todos os dados eem obj relacionados, sempre pense em aplicar um filtro = Ex: Where(produto => produto.CategoriaId <= 100)
             try
-            { 
-                return await _context.Categorias.Include(produto => produto.Produtos)
-                       .Where(produto => produto.CategoriaId <= 100).AsNoTracking().ToListAsync();
+            {
+                return _contextUnitOfWork.CategoriaRepository.GetAllCategoriasProdutosTop100().ToList();
+                       
             }
             catch (Exception)
             {
@@ -155,7 +155,7 @@ namespace APICatalogo.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> PostCategoria(Categoria categoria)
+        public ActionResult<Categoria> PostCategoria(Categoria categoria)
         {
             try
             {
@@ -164,8 +164,8 @@ namespace APICatalogo.Controllers
                     return BadRequest("Dados invalidos");
                 }
 
-                _context.Categorias.Add(categoria);
-                await _context.SaveChangesAsync();
+                _contextUnitOfWork.CategoriaRepository.Add(categoria);
+                _contextUnitOfWork.Commit();
 
                 return new CreatedAtRouteResult("obterCategoria", new { id = categoria.CategoriaId }, categoria);
             }
@@ -181,16 +181,17 @@ namespace APICatalogo.Controllers
         [HttpPut("{id:int:min(1)}")]
         public async Task<ActionResult> PutCategoria(int id, Categoria categoria)
         {
+            var categoriaId = _contextUnitOfWork.CategoriaRepository.GetByid(categ => categ.CategoriaId == id);
             try
             {
-                if (id != categoria.CategoriaId)
+                if (id != categoria.CategoriaId || categoriaId is null)
                 {
                     //retorna response status is 400
                     return BadRequest($"Não foi possivel atualizar a categoria pois o id = {id} não existe");
                 }
 
-                _context.Entry(categoria).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
+                _contextUnitOfWork.CategoriaRepository.Update(categoria);
+                _contextUnitOfWork.Commit();
 
                 return Ok(categoria);//retorna response status is 200
             }
@@ -204,19 +205,19 @@ namespace APICatalogo.Controllers
         }
 
         [HttpDelete("{id:int:min(1)}")]
-        public async Task<ActionResult<Categoria>> DeleteCategoria(int id)
+        public ActionResult<Categoria> DeleteCategoria(int id)
         {
             try
             {
-                var categoria = await _context.Categorias.FirstOrDefaultAsync(categoria => categoria.CategoriaId == id);
+                var categoria = _contextUnitOfWork.CategoriaRepository.GetByid(categoria => categoria.CategoriaId == id);
 
                 if (categoria is null)
                 {
                     return NotFound("Categoria não encontrada para efetuar a exclusãp");
                 }
 
-                _context.Categorias.Remove(categoria);
-                await _context.SaveChangesAsync();
+                _contextUnitOfWork.CategoriaRepository.Delete(categoria);
+                _contextUnitOfWork.Commit();
 
                 return Ok(categoria);
             }

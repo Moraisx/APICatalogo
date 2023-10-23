@@ -14,5 +14,10 @@ namespace APICatalogo.Repository
         {
             return Get().Include(produto => produto.Produtos).AsNoTracking().ToList();
         }
+
+        public IEnumerable<Categoria> GetAllCategoriasProdutosTop100()
+        {
+            return Get().Include(produto => produto.Produtos).Where(categoria =>  categoria.CategoriaId <= 100).AsNoTracking().ToList();
+        }
     }
 }
