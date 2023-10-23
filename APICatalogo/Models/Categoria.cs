@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace APICatalogo.Models
 {
@@ -30,6 +31,7 @@ namespace APICatalogo.Models
 
         //Propriedade de navegação 1 x N - Propriedades de navegação não são mapeadas(Não cria coluna) no BD
         //EF Mapeia e cria uma FK CategoriaId em Produtos
+  
         public ICollection<Produto>? Produtos { get; set; }
 
     }

@@ -1,8 +1,10 @@
 using APICatalogo.Context;
+using APICatalogo.DTOs.Mappings;
 using APICatalogo.Extensions;
 using APICatalogo.Logging;
 using APICatalogo.Repository;
 using APICatalogo.Services;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 /// <summary>
@@ -36,6 +38,14 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 //Necessario para a utilização do [FromServices]
 builder.Services.AddTransient<IMeuServico, MeuServico>();
+
+//Addicionando o auto-mapper (DTO => Mapeamento feito atraves da classe MappingProfile)
+var mappingConfig = new MapperConfiguration(mc => 
+{
+    mc.AddProfile(new MappingProfile());
+ });
+IMapper mapper = mappingConfig.CreateMapper();
+builder.Services.AddSingleton(mapper);
 
 //Exemplo de log salvo em txt
 var alimentarLog = false;
