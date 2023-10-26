@@ -1,8 +1,10 @@
 ﻿using APICatalogo.DTOs;
 using APICatalogo.Models;
+using APICatalogo.Pagination;
 using APICatalogo.Repository;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace APICatalogo.Controllers
 {
@@ -23,6 +25,51 @@ namespace APICatalogo.Controllers
         //IEnumerable fica mais otimizado
         //ActionResult para retornar mais de um tipo (Pode retornar todos os tipos suportados por ele)
         [HttpGet]
+        public ActionResult<IEnumerable<object>> GetAllProdutosPaginados([FromQuery] ProdutosParameters produtosParameters)
+        {
+            var produto = _contextUnitOfWork.ProdutoRepository.GetAllProdutosPaginados(produtosParameters);
+            var metadata = new
+            {
+                produto.TodalDePaginas,
+                produto.TamanhoDaPagina,
+                produto.PaginaAtual,
+                produto.ContagemTotal,
+                produto.PaginaAnterior,
+                produto.PaginaPosterior,
+            };
+
+            Response.Headers.Add("Paginacao", JsonConvert.SerializeObject(metadata));
+
+            var produtoDTO = _mapper.Map<List<ProdutoDTO>>(produto);
+
+            return Ok(new
+            {
+                Pagina = produto.PaginaAtual,
+                Items_por_pagina = produto.TamanhoDaPagina,
+                Total_Paginas = produto.TodalDePaginas,
+                Total_registros = produto.ContagemTotal,
+                data = produtoDTO
+            });
+
+            //Sem auto-mapper
+            /* var produto = _contextUnitOfWork.ProdutoRepository.Get().Take(100).ToList();
+            var produtoDTO = new List<ProdutoDTO>();
+            foreach (var prod in produto)
+            {
+                produtoDTO.Add(new ProdutoDTO
+                {
+                    ProdutoId = prod.ProdutoId,
+                    Nome = prod.Nome,
+                    Descricao = prod.Descricao,
+                    Preco = prod.Preco,
+                    ImagemUrl = prod.ImagemUrl,
+                    CategoriaId = prod.CategoriaId
+                }) ;
+            }
+            return produtoDTO; */
+        }
+
+        [HttpGet("TodosProdutos")]
         public ActionResult<IEnumerable<ProdutoDTO>> GetAll()
         {
             //Evitar retornar todos os dados, sempre pense em aplicar um filtro = Ex: Take(100)
