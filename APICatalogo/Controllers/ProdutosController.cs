@@ -28,28 +28,20 @@ namespace APICatalogo.Controllers
         public ActionResult<IEnumerable<object>> GetAllProdutosPaginados([FromQuery] ProdutosParameters produtosParameters)
         {
             var produto = _contextUnitOfWork.ProdutoRepository.GetAllProdutosPaginados(produtosParameters);
-            var metadata = new
-            {
-                produto.TodalDePaginas,
-                produto.TamanhoDaPagina,
-                produto.PaginaAtual,
-                produto.ContagemTotal,
-                produto.PaginaAnterior,
-                produto.PaginaPosterior,
-            };
-
-            Response.Headers.Add("Paginacao", JsonConvert.SerializeObject(metadata));
-
+          
             var produtoDTO = _mapper.Map<List<ProdutoDTO>>(produto);
 
-            return Ok(new
-            {
-                Pagina = produto.PaginaAtual,
-                Items_por_pagina = produto.TamanhoDaPagina,
-                Total_Paginas = produto.TodalDePaginas,
-                Total_registros = produto.ContagemTotal,
-                data = produtoDTO
-            });
+            var produtoDTO_Paginado = PaginacaoDTO<ProdutoDTO>.PaginacaoModel(
+                new PaginacaoDTO<ProdutoDTO>(
+                    produto.PaginaAtual,
+                    produto.TodalDePaginas,
+                    produto.TamanhoDaPagina,
+                    produto.ContagemTotal,
+                    produto.PaginaAnterior,
+                    produto.PaginaPosterior
+                    ), produtoDTO);
+
+            return Ok(produtoDTO_Paginado);
 
             //Sem auto-mapper
             /* var produto = _contextUnitOfWork.ProdutoRepository.Get().Take(100).ToList();
